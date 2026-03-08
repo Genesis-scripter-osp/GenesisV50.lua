@@ -1,6 +1,16 @@
 local UI = {}
 function UI:Init()
+    -- Nếu đã có Menu trên màn hình rồi thì không tạo thêm nữa
+    if game.CoreGui:FindFirstChild("GenesisMenu") then return end
+    
     _G.Genesis:Register("UI", self)
+    local sg = Instance.new("ScreenGui", game.CoreGui)
+    sg.Name = "GenesisMenu" -- Đặt tên để dễ kiểm tra
+    
+    -- ... (Phần code tạo Frame và Button của Duy giữ nguyên bên dưới)
+end
+return UI
+  _G.Genesis:Register("UI", self)
     local sg = Instance.new("ScreenGui", game.CoreGui)
     local frame = Instance.new("Frame", sg)
     frame.Size = UDim2.new(0, 300, 0, 250)
