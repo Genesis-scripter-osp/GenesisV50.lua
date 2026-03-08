@@ -2,7 +2,7 @@
 _G.Genesis = {
     Modules = {},
     -- ĐÃ CẬP NHẬT TÊN TÀI KHOẢN MỚI CỦA DUY
-    BaseUrl = "https://raw.githubusercontent.com/Genesis-scripter-osp/DuyChuyenScriptHub/main/",
+    BaseUrl = "https://raw.githubusercontent.com/Genesis-scripter-osp/GenesisV50.luaHub/main/",
     BootPriority = {
         "network/manager.lua",
         "systems/combat.lua",
