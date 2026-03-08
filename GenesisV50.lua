@@ -1,13 +1,12 @@
 -- [[ GENESIS V50 - SUPREME EDITION BY DUY THU ]]
 _G.Genesis = {
     Modules = {},
-    -- ĐÃ SỬA ĐÚNG ĐƯỜNG DẪN RAW THEO REPO GenesisV50.lua (Ảnh 13)
     BaseUrl = "https://raw.githubusercontent.com/Genesis-scripter-osp/GenesisV50.lua/main/",
     BootPriority = {
-        "network/manager.lua", -- Đã có (Ảnh 19)
-        "systems/combat.lua",  -- Đã có (Ảnh 18)
-        "ui/window.lua",       -- Đã có (Ảnh 20)
-        "core/engine.lua"      -- Đã có (Ảnh 17)
+        "network/manager.lua",
+        "systems/combat.lua",
+        "ui/window.lua",
+        "core/engine.lua"
     }
 }
 
@@ -16,12 +15,17 @@ function _G.Genesis:Get(name) return self.Modules[name] end
 
 for _, path in ipairs(_G.Genesis.BootPriority) do
     local success, result = pcall(function()
-        return loadstring(game:HttpGet(_G.Genesis.BaseUrl .. path))()
+        -- KHÔNG để dấu () ở cuối loadstring
+        return loadstring(game:HttpGet(_G.Genesis.BaseUrl .. path))
     end)
+    
     if success and result then
-        if result.Init then pcall(function() result:Init() end) end
+        local moduleFunc = result() -- Chạy file để lấy Table module
+        if moduleFunc and type(moduleFunc) == "table" and moduleFunc.Init then
+            pcall(function() moduleFunc:Init() end) -- Kích hoạt Init để hiện Menu
+        end
     else
-        warn("⚠️ Lỗi không tìm thấy file: " .. path)
+        warn("⚠️ Lỗi nạp file: " .. path)
     end
 end
-print("👑 GENESIS V50 ONLINE - LOADED BY DUY THU")
+print("👑 GENESIS V50 ĐÃ SẴN SÀNG - CHÚC DUY THU CHƠI GAME VUI VẺ!")
