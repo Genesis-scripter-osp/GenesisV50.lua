@@ -1,13 +1,13 @@
 -- [[ GENESIS V50 - SUPREME EDITION BY DUY THU ]]
 _G.Genesis = {
     Modules = {},
-    -- ĐÃ SỬA ĐÚNG ĐƯỜNG DẪN THEO ẢNH 13 CỦA BẠN
+    -- ĐƯỜNG DẪN RAW CHUẨN ĐỂ ROBLOX ĐỌC ĐƯỢC CODE
     BaseUrl = "https://raw.githubusercontent.com/Genesis-scripter-osp/GenesisV50.lua/main/",
     BootPriority = {
-        "network/manager.lua",   -- Đã có (ảnh 19)
-        "systems/combat.lua",    -- Đã có (ảnh 18)
-        "ui/window.lua",         -- Đã có (ảnh 20)
-        "core/engine.lua"        -- Đã có (ảnh 17)
+        "network/manager.lua",
+        "systems/combat.lua",
+        "ui/window.lua",
+        "core/engine.lua"
     }
 }
 
@@ -21,7 +21,6 @@ for _, path in ipairs(_G.Genesis.BootPriority) do
     if success and result then
         if result.Init then pcall(function() result:Init() end) end
     else
-        warn("⚠️ Lỗi không tìm thấy file: " .. path)
+        warn("⚠️ Lỗi load: " .. path)
     end
 end
-print("👑 GENESIS V50 - LOADED SUCCESSFULLY BY DUY THU")
