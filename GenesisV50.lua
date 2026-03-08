@@ -1,63 +1,70 @@
--- Genesis Hub V5 Loader
-
 local Genesis = {}
 
-local BASE =
-"https://raw.githubusercontent.com/Genesis-scripter-osp/GenesisV50/main/"
+local BASE = "https://raw.githubusercontent.com/Genesis-scripter-osp/GenesisV50.lua/main/"
 
 function Genesis:Load(path)
 
-    local ok, module = pcall(function()
-        return loadstring(game:HttpGet(BASE .. path))()
+    local success,module = pcall(function()
+        return loadstring(game:HttpGet(BASE..path))()
     end)
 
-    if ok then
-        print("[Genesis] Loaded:",path)
+    if success then
+        print("Loaded:",path)
         return module
     else
-        warn("[Genesis] Failed:",path)
+        warn("Genesis Load Error:",path)
         warn(module)
     end
 
 end
 
--- load core
-local Scheduler =
-Genesis:Load("core/scheduler.lua")
 
--- load ui
-local UI =
-Genesis:Load("ui/window.lua")
+-- CORE
+local Engine = Genesis:Load("core/engine.lua")
+local Player = Genesis:Load("core/player.lua")
+local Services = Genesis:Load("core/services.lua")
+local Utils = Genesis:Load("core/utils.lua")
 
--- load systems
-local AutoFarm =
-Genesis:Load("systems/autofarm.lua")
 
-local FastAttack =
-Genesis:Load("systems/fastattack.lua")
+-- UI
+local UI = Genesis:Load("ui/window.lua")
 
--- load visual
-local ESP =
-Genesis:Load("visual/esp.lua")
 
--- load network
-local ServerHop =
-Genesis:Load("network/serverhop.lua")
+-- SYSTEMS
+local AutoFarm = Genesis:Load("systems/autofarm.lua")
+local FastAttack = Genesis:Load("systems/fastattack.lua")
 
--- create window
+
+-- VISUAL
+local ESP = Genesis:Load("visual/esp.lua")
+
+
+-- NETWORK
+local ServerHop = Genesis:Load("network/serverhop.lua")
+
+
+
+-- CREATE UI
 local window = UI:CreateWindow("Genesis Hub V5")
+
 
 window:AddToggle("Auto Farm",function(state)
 
     if state then
-        Scheduler:Add("farm",1,function()
+
+        Engine:AddLoop("AutoFarm",1,function()
             AutoFarm:Run()
         end)
+
     else
-        Scheduler:Remove("farm")
+
+        Engine:RemoveLoop("AutoFarm")
+
     end
 
 end)
+
+
 
 window:AddToggle("Fast Attack",function(state)
 
@@ -69,12 +76,22 @@ window:AddToggle("Fast Attack",function(state)
 
 end)
 
+
+
 window:AddButton("Enemy ESP",function()
+
     ESP:EnableEnemies()
+
 end)
 
+
+
 window:AddButton("Server Hop Low Player",function()
+
     ServerHop:LowPlayer()
+
 end)
+
+
 
 return Genesis
