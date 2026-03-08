@@ -1,20 +1,29 @@
--- [[ GENESIS V50 - ENGINE CHUẨN ]]
+-- [[ GENESIS V50 - CORE ENGINE BY DUY THU ]]
 local Engine = {}
-_G.Genesis_Loaded = _G.Genesis_Loaded or false -- Biến kiểm tra để không nạp trùng
+_G.Genesis_Loaded = _G.Genesis_Loaded or false -- Kiểm tra xem script đã chạy chưa
 
 function Engine:Init()
-    if _G.Genesis_Loaded then return end -- Nếu đã nạp rồi thì thoát luôn
+    -- Nếu đã nạp rồi thì không chạy lại nữa để tránh bị lặp Menu
+    if _G.Genesis_Loaded then 
+        return 
+    end 
     
-    print("🚀 Đang khởi động các hệ thống...")
+    print("🚀 Genesis V50: Đang nạp các module...")
     
-    -- Chỉ nạp UI và các hệ thống 1 lần duy nhất
+    -- Nạp Giao diện (UI)
     local UI = _G.Genesis:Get("UI")
-    if UI and UI.Init then UI:Init() end
+    if UI and UI.Init then 
+        pcall(function() UI:Init() end) 
+    end
     
+    -- Nạp Hệ thống chiến đấu (Combat)
     local Combat = _G.Genesis:Get("Combat")
-    if Combat and Combat.Init then Combat:Init() end
+    if Combat and Combat.Init then 
+        pcall(function() Combat:Init() end) 
+    end
     
     _G.Genesis_Loaded = true -- Đánh dấu đã nạp thành công
+    print("👑 GENESIS V50 ONLINE!")
 end
 
 return Engine
