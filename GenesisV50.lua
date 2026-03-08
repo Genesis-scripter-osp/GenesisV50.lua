@@ -1,146 +1,157 @@
 -- Genesis Hub Main
 
-repeat task.wait() until game:IsLoaded()
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+repeat task.wait() until game.Players.LocalPlayer
 
 --------------------------------------------------
--- SERVICES
+-- HUB
 --------------------------------------------------
 
-local HttpService = game:GetService("HttpService")
+local Genesis = {}
+Genesis.Modules = {}
 
 --------------------------------------------------
--- LOAD MODULE FUNCTION
+-- MODULE LOADER
 --------------------------------------------------
 
-local function LoadModule(path)
+function Genesis:LoadModule(name,path)
 
     local url =
     "https://raw.githubusercontent.com/Genesis-scripter-osp/GenesisV50.lua/main/"..path
 
     local success,result = pcall(function()
-
         return loadstring(game:HttpGet(url))()
-
     end)
 
     if success then
-        print("Loaded:",path)
-        return result
+        self.Modules[name] = result
+        print("[Genesis] Loaded:",name)
     else
-        warn("Failed:",path,result)
+        warn("[Genesis] Failed:",name)
     end
 
 end
 
 --------------------------------------------------
--- LOAD CORE
+-- CORE
 --------------------------------------------------
 
-local Engine = LoadModule("core/engine.lua")
-
-Engine:Init()
-
---------------------------------------------------
--- LOAD NETWORK
---------------------------------------------------
-
-local Network = LoadModule("network/network.lua")
-
-if Network then
-    Network:Init()
-    Engine:Register("Network",Network)
-end
+Genesis:LoadModule("Engine","core/engine.lua")
+Genesis:LoadModule("Player","core/player.lua")
+Genesis:LoadModule("Services","core/services.lua")
+Genesis:LoadModule("Utils","core/utils.lua")
 
 --------------------------------------------------
--- LOAD SYSTEM
+-- NETWORK
 --------------------------------------------------
 
-local ServerHop = LoadModule("system/serverhop.lua")
-
-if ServerHop then
-    Engine:Register("ServerHop",ServerHop)
-end
+Genesis:LoadModule("Network","network/network.lua")
 
 --------------------------------------------------
--- LOAD VISUAL
+-- SYSTEMS
 --------------------------------------------------
 
-local ESP = LoadModule("visual/esp.lua")
-
-if ESP then
-    Engine:Register("ESP",ESP)
-end
+Genesis:LoadModule("AutoFarm","systems/autofarm.lua")
+Genesis:LoadModule("FastAttack","systems/fastattack.lua")
+Genesis:LoadModule("ServerHop","systems/serverhop.lua")
 
 --------------------------------------------------
--- LOAD UI
+-- VISUAL
 --------------------------------------------------
 
-local Window = LoadModule("ui/window.lua")
-
-local UI = Window.new({
-    Title = "Genesis Hub",
-    ToggleKey = Enum.KeyCode.RightControl
-})
-
-Engine:Register("UI",UI)
+Genesis:LoadModule("ESP","visual/esp.lua")
 
 --------------------------------------------------
--- UI TABS
+-- UI
 --------------------------------------------------
 
-local FarmTab = UI:CreateTab("Farm")
-local CombatTab = UI:CreateTab("Combat")
-local VisualTab = UI:CreateTab("Visual")
-local SystemTab = UI:CreateTab("System")
+Genesis:LoadModule("UI","ui/window.lua")
+
+repeat task.wait() until Genesis.Modules.UI
+
+Genesis.Modules.UI:Init()
 
 --------------------------------------------------
--- BUTTONS
+-- TABS
 --------------------------------------------------
 
-SystemTab:CreateButton({
+local FarmTab = Genesis.Modules.UI:CreateTab("Farm")
+local CombatTab = Genesis.Modules.UI:CreateTab("Combat")
+local VisualTab = Genesis.Modules.UI:CreateTab("Visual")
+local ServerTab = Genesis.Modules.UI:CreateTab("Server")
 
-    Name = "Server Hop",
+--------------------------------------------------
+-- FARM
+--------------------------------------------------
 
-    Callback = function()
+Genesis.Modules.UI:CreateToggle(FarmTab,"Auto Farm",function(v)
 
-        local hop = Engine:Get("ServerHop")
+    if Genesis.Modules.AutoFarm then
 
-        if hop then
-            hop:Hop()
+        if v then
+            Genesis.Modules.AutoFarm:Start()
+        else
+            Genesis.Modules.AutoFarm:Stop()
         end
 
     end
 
-})
+end)
 
-VisualTab:CreateToggle({
+--------------------------------------------------
+-- COMBAT
+--------------------------------------------------
 
-    Name = "Player ESP",
+Genesis.Modules.UI:CreateToggle(CombatTab,"Fast Attack",function(v)
 
-    Default = false,
+    if Genesis.Modules.FastAttack then
 
-    Callback = function(v)
-
-        local esp = Engine:Get("ESP")
-
-        if esp then
-
-            if v then
-                esp:Start()
-            else
-                esp:Stop()
-            end
-
+        if v then
+            Genesis.Modules.FastAttack:Start()
+        else
+            Genesis.Modules.FastAttack:Stop()
         end
 
     end
 
-})
+end)
 
 --------------------------------------------------
--- NOTIFY
+-- VISUAL
 --------------------------------------------------
 
-Engine:Notify("Genesis Hub Loaded")
+Genesis.Modules.UI:CreateToggle(VisualTab,"Player ESP",function(v)
 
-print("Genesis Hub Started")
+    if Genesis.Modules.ESP then
+        Genesis.Modules.ESP:Toggle(v)
+    end
+
+end)
+
+--------------------------------------------------
+-- SERVER
+--------------------------------------------------
+
+Genesis.Modules.UI:CreateButton(ServerTab,"Server Hop",function()
+
+    if Genesis.Modules.ServerHop then
+        Genesis.Modules.ServerHop:Hop()
+    end
+
+end)
+
+Genesis.Modules.UI:CreateButton(ServerTab,"Rejoin Server",function()
+
+    game:GetService("TeleportService"):
+    Teleport(game.PlaceId,game.Players.LocalPlayer)
+
+end)
+
+--------------------------------------------------
+-- FINISH
+--------------------------------------------------
+
+print("Genesis Hub Loaded")
