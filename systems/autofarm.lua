@@ -4,15 +4,23 @@ local player = game.Players.LocalPlayer
 
 function Farm:GetMob()
 
+    if not player.Character then return end
+    if not player.Character:FindFirstChild("HumanoidRootPart") then return end
+
     local nearest
     local dist = math.huge
 
-    for _,mob in pairs(workspace.Enemies:GetChildren()) do
+    local enemies = workspace:FindFirstChild("Enemies")
+    if not enemies then return end
 
-        if mob:FindFirstChild("HumanoidRootPart") and mob.Humanoid.Health > 0 then
+    for _,mob in pairs(enemies:GetChildren()) do
 
-            local d = (mob.HumanoidRootPart.Position -
-            player.Character.HumanoidRootPart.Position).Magnitude
+        if mob:FindFirstChild("HumanoidRootPart") then
+
+            local myPos = player.Character.HumanoidRootPart.Position
+            local mobPos = mob.HumanoidRootPart.Position
+
+            local d = (mobPos - myPos).Magnitude
 
             if d < dist then
                 dist = d
@@ -27,6 +35,7 @@ function Farm:GetMob()
 
 end
 
+
 function Farm:Run()
 
     local mob = self:GetMob()
@@ -34,7 +43,7 @@ function Farm:Run()
     if mob then
 
         player.Character.HumanoidRootPart.CFrame =
-        mob.HumanoidRootPart.CFrame * CFrame.new(0,0,4)
+        mob.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
 
     end
 
