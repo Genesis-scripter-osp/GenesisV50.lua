@@ -1,32 +1,27 @@
-local Combat = { FastAttack = false }
+-- [[ GENESIS V50 - COMBAT SYSTEM BY DUY THU ]]
+local Combat = {
+    FastAttack = false, -- Biến này để Menu bật/tắt
+    AttackDistance = 15 -- Khoảng cách đánh
+}
 
-function Combat:Attack()
-    if self.FastAttack then
-        local lp = game.Players.LocalPlayer
-        -- Kiểm tra xem nhân vật có đang cầm vũ khí (Kiếm, Đấm, Trái ác quỷ) không
-        local tool = lp.Character and lp.Character:FindFirstChildOfClass("Tool")
-        
-        if tool then
-            -- 1. Gửi lệnh đăng ký đòn đánh lên Server Blox Fruits
-            game:GetService("ReplicatedStorage").Modules.Net["RE/RegisterAttack"]:FireServer(tool)
-            
-            -- 2. Tự động click chuột trái (Bypass cooldown)
-            game:GetService("VirtualUser"):CaptureController()
-            game:GetService("VirtualUser"):Button1Down(Vector2.new(1280, 672))
-        else
-            -- Nếu không cầm gì thì thông báo nhẹ trong Console (F9)
-            -- Duy nhớ phải cầm vũ khí trên tay thì nó mới đánh nhé!
-        end
-    end
-end
-
-function Combat:Init() 
+function Combat:Init()
     _G.Genesis:Register("Combat", self)
-    -- Chạy vòng lặp đánh liên tục
-    game:GetService("RunService").Stepped:Connect(function()
-        self:Attack()
+    
+    -- Vòng lặp kiểm tra và đánh nhanh
+    spawn(function()
+        while wait() do
+            if self.FastAttack then
+                pcall(function()
+                    -- Lệnh đánh của Blox Fruit (Duy có thể thay đổi tùy bản game)
+                    local VirtualUser = game:GetService("VirtualUser")
+                    VirtualUser:CaptureController()
+                    VirtualUser:ClickButton1(Vector2.new(850, 450))
+                end)
+            end
+        end
     end)
-    print("⚔️ Hệ thống Combat đã sẵn sàng!")
+    
+    print("⚔️ Combat System đã sẵn sàng!")
 end
 
 return Combat
