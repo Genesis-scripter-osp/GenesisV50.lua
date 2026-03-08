@@ -1,449 +1,283 @@
 local UI = {}
 
-local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
 
-local player = Players.LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
-local ScreenGui
-local Main
-local TabsFrame
-local PagesFrame
-local NotifFrame
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GenesisHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
 
-local Tabs = {}
-local CurrentPage
+-------------------------------------
+-- OPEN BUTTON
+-------------------------------------
 
-------------------------------------------------
--- Tween helper
-------------------------------------------------
+local OpenButton = Instance.new("ImageButton")
+OpenButton.Size = UDim2.new(0,50,0,50)
+OpenButton.Position = UDim2.new(0,20,0.6,0)
+OpenButton.BackgroundTransparency = 1
+OpenButton.Image = "rbxassetid://7733964640"
+OpenButton.Parent = ScreenGui
 
-local function tween(obj,props,time)
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(1,0)
+Corner.Parent = OpenButton
 
-    TweenService:Create(
-        obj,
-        TweenInfo.new(time or 0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),
-        props
-    ):Play()
+-------------------------------------
+-- MAIN WINDOW
+-------------------------------------
 
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0,520,0,360)
+Main.Position = UDim2.new(0.5,-260,0.5,-180)
+Main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Main.Visible = false
+Main.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0,8)
+MainCorner.Parent = Main
+
+-------------------------------------
+-- TOP BAR
+-------------------------------------
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1,0,0,40)
+TopBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+TopBar.Parent = Main
+
+local Title = Instance.new("TextLabel")
+Title.Text = "Genesis Hub"
+Title.Size = UDim2.new(0,200,1,0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255,255,255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.Parent = TopBar
+
+-------------------------------------
+-- CLOSE BUTTON
+-------------------------------------
+
+local Close = Instance.new("TextButton")
+Close.Size = UDim2.new(0,40,1,0)
+Close.Position = UDim2.new(1,-40,0,0)
+Close.Text = "X"
+Close.BackgroundTransparency = 1
+Close.TextColor3 = Color3.fromRGB(255,70,70)
+Close.Font = Enum.Font.GothamBold
+Close.TextSize = 18
+Close.Parent = TopBar
+
+-------------------------------------
+-- TAB HOLDER
+-------------------------------------
+
+local Tabs = Instance.new("Frame")
+Tabs.Size = UDim2.new(0,120,1,-40)
+Tabs.Position = UDim2.new(0,0,0,40)
+Tabs.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Tabs.Parent = Main
+
+local TabLayout = Instance.new("UIListLayout")
+TabLayout.Parent = Tabs
+TabLayout.Padding = UDim.new(0,5)
+
+-------------------------------------
+-- PAGE HOLDER
+-------------------------------------
+
+local Pages = Instance.new("Frame")
+Pages.Size = UDim2.new(1,-120,1,-40)
+Pages.Position = UDim2.new(0,120,0,40)
+Pages.BackgroundTransparency = 1
+Pages.Parent = Main
+
+-------------------------------------
+-- DRAG SYSTEM
+-------------------------------------
+
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+
+    local delta = input.Position - dragStart
+
+    Main.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
 end
 
-------------------------------------------------
--- Ripple Effect
-------------------------------------------------
+TopBar.InputBegan:Connect(function(input)
 
-local function ripple(button)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
 
-    button.ClipsDescendants = true
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
 
-    button.MouseButton1Down:Connect(function(x,y)
+        input.Changed:Connect(function()
 
-        local circle = Instance.new("Frame")
-        circle.BackgroundTransparency = 0.5
-        circle.BackgroundColor3 = Color3.new(1,1,1)
-        circle.AnchorPoint = Vector2.new(0.5,0.5)
-        circle.Position = UDim2.new(0,x-button.AbsolutePosition.X,0,y-button.AbsolutePosition.Y)
-        circle.Size = UDim2.new(0,0,0,0)
-        circle.Parent = button
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
 
-        local corner = Instance.new("UICorner",circle)
-        corner.CornerRadius = UDim.new(1,0)
-
-        tween(circle,{Size=UDim2.new(0,200,0,200),BackgroundTransparency=1},0.4)
-
-        task.delay(0.4,function()
-            circle:Destroy()
         end)
+    end
+end)
 
-    end)
+TopBar.InputChanged:Connect(function(input)
 
-end
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
 
-------------------------------------------------
--- Notification
-------------------------------------------------
+end)
 
-function UI:Notify(text)
+UIS.InputChanged:Connect(function(input)
 
-    local notif = Instance.new("Frame")
-    notif.Size = UDim2.new(0,250,0,50)
-    notif.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    notif.Position = UDim2.new(1,260,1,-60)
-    notif.Parent = NotifFrame
+    if input == dragInput and dragging then
+        update(input)
+    end
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,0,1,0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = Color3.new(1,1,1)
-    label.Parent = notif
+end)
 
-    tween(notif,{Position=UDim2.new(1,-260,1,-60)},0.3)
+-------------------------------------
+-- TOGGLE HUB
+-------------------------------------
 
-    task.delay(3,function()
-        tween(notif,{Position=UDim2.new(1,260,1,-60)},0.3)
-        task.wait(0.3)
-        notif:Destroy()
-    end)
+local open = false
 
-end
+OpenButton.MouseButton1Click:Connect(function()
 
-------------------------------------------------
--- INIT
-------------------------------------------------
+    open = not open
 
-function UI:Init()
+    if open then
 
-    ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.ResetOnSpawn = false
-    ScreenGui.Parent = PlayerGui
+        Main.Visible = true
 
-    ------------------------------------------------
+        Main.Size = UDim2.new(0,0,0,0)
 
-    Main = Instance.new("Frame")
-    Main.Size = UDim2.new(0,650,0,420)
-    Main.Position = UDim2.new(0.5,-325,0.5,-210)
-    Main.BackgroundColor3 = Color3.fromRGB(22,22,22)
-    Main.Parent = ScreenGui
+        TweenService:Create(
+            Main,
+            TweenInfo.new(.25),
+            {Size = UDim2.new(0,520,0,360)}
+        ):Play()
 
-    local corner = Instance.new("UICorner",Main)
-    corner.CornerRadius = UDim.new(0,8)
+    else
 
-    ------------------------------------------------
+        TweenService:Create(
+            Main,
+            TweenInfo.new(.2),
+            {Size = UDim2.new(0,0,0,0)}
+        ):Play()
 
-    local Top = Instance.new("Frame")
-    Top.Size = UDim2.new(1,0,0,40)
-    Top.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    Top.Parent = Main
+        wait(.2)
+        Main.Visible = false
 
-    local Title = Instance.new("TextLabel")
-    Title.Text = "Genesis Hub"
-    Title.Size = UDim2.new(1,0,1,0)
-    Title.BackgroundTransparency = 1
-    Title.TextColor3 = Color3.new(1,1,1)
-    Title.TextSize = 20
-    Title.Parent = Top
+    end
 
-    ------------------------------------------------
-    -- Drag window
-    ------------------------------------------------
+end)
 
-    local dragging
-    local dragStart
-    local startPos
+Close.MouseButton1Click:Connect(function()
 
-    Top.InputBegan:Connect(function(input)
+    Main.Visible = false
+    open = false
 
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = Main.Position
-        end
+end)
 
-    end)
+-------------------------------------
+-- TAB SYSTEM
+-------------------------------------
 
-    UIS.InputChanged:Connect(function(input)
+function UI:CreateTab(name)
 
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-
-            local delta = input.Position - dragStart
-
-            Main.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-
-        end
-
-    end)
-
-    UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    ------------------------------------------------
-    -- Tabs
-    ------------------------------------------------
-
-    TabsFrame = Instance.new("Frame")
-    TabsFrame.Size = UDim2.new(0,170,1,-40)
-    TabsFrame.Position = UDim2.new(0,0,0,40)
-    TabsFrame.BackgroundColor3 = Color3.fromRGB(26,26,26)
-    TabsFrame.Parent = Main
-
-    local layout = Instance.new("UIListLayout",TabsFrame)
-    layout.Padding = UDim.new(0,5)
-
-    ------------------------------------------------
-    -- Pages
-    ------------------------------------------------
-
-    PagesFrame = Instance.new("Frame")
-    PagesFrame.Size = UDim2.new(1,-170,1,-40)
-    PagesFrame.Position = UDim2.new(0,170,0,40)
-    PagesFrame.BackgroundTransparency = 1
-    PagesFrame.Parent = Main
-
-    ------------------------------------------------
-    -- Notification holder
-    ------------------------------------------------
-
-    NotifFrame = Instance.new("Frame")
-    NotifFrame.Size = UDim2.new(1,0,1,0)
-    NotifFrame.BackgroundTransparency = 1
-    NotifFrame.Parent = ScreenGui
-
-end
-
-------------------------------------------------
--- TAB
-------------------------------------------------
-
-function UI:CreateTab(name,icon)
-
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(1,0,0,40)
-    Button.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    Button.Text = name
-    Button.TextColor3 = Color3.new(1,1,1)
-    Button.Parent = TabsFrame
-
-    ripple(Button)
-
-    ------------------------------------------------
+    local TabButton = Instance.new("TextButton")
+    TabButton.Size = UDim2.new(1,0,0,40)
+    TabButton.Text = name
+    TabButton.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    TabButton.TextColor3 = Color3.fromRGB(255,255,255)
+    TabButton.Font = Enum.Font.Gotham
+    TabButton.TextSize = 14
+    TabButton.Parent = Tabs
 
     local Page = Instance.new("Frame")
     Page.Size = UDim2.new(1,0,1,0)
-    Page.BackgroundTransparency = 1
     Page.Visible = false
-    Page.Parent = PagesFrame
+    Page.BackgroundTransparency = 1
+    Page.Parent = Pages
 
-    local layout = Instance.new("UIListLayout",Page)
-    layout.Padding = UDim.new(0,6)
+    local Layout = Instance.new("UIListLayout")
+    Layout.Padding = UDim.new(0,6)
+    Layout.Parent = Page
 
-    Tabs[name] = Page
+    TabButton.MouseButton1Click:Connect(function()
 
-    if not CurrentPage then
-        CurrentPage = Page
+        for i,v in pairs(Pages:GetChildren()) do
+            if v:IsA("Frame") then
+                v.Visible = false
+            end
+        end
+
         Page.Visible = true
+
+    end)
+
+    local TabFunctions = {}
+
+    function TabFunctions:CreateButton(text,callback)
+
+        local Button = Instance.new("TextButton")
+        Button.Size = UDim2.new(1,-10,0,35)
+        Button.Text = text
+        Button.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        Button.TextColor3 = Color3.fromRGB(255,255,255)
+        Button.Font = Enum.Font.Gotham
+        Button.TextSize = 14
+        Button.Parent = Page
+
+        Button.MouseButton1Click:Connect(callback)
+
     end
 
-    Button.MouseButton1Click:Connect(function()
+    function TabFunctions:CreateToggle(text,callback)
 
-        if CurrentPage then
-            CurrentPage.Visible = false
-        end
+        local Toggle = Instance.new("TextButton")
+        Toggle.Size = UDim2.new(1,-10,0,35)
+        Toggle.Text = text.." : OFF"
+        Toggle.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        Toggle.TextColor3 = Color3.fromRGB(255,255,255)
+        Toggle.Font = Enum.Font.Gotham
+        Toggle.TextSize = 14
+        Toggle.Parent = Page
 
-        Page.Visible = true
-        CurrentPage = Page
+        local state = false
 
-    end)
+        Toggle.MouseButton1Click:Connect(function()
 
-    return Page
+            state = not state
 
-end
+            Toggle.Text = text.." : "..(state and "ON" or "OFF")
 
-------------------------------------------------
--- BUTTON
-------------------------------------------------
-
-function UI:CreateButton(tab,text,callback)
-
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1,-10,0,40)
-    button.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    button.Text = text
-    button.TextColor3 = Color3.new(1,1,1)
-    button.Parent = tab
-
-    ripple(button)
-
-    button.MouseButton1Click:Connect(function()
-
-        if callback then
-            callback()
-        end
-
-    end)
-
-end
-
-------------------------------------------------
--- TOGGLE
-------------------------------------------------
-
-function UI:CreateToggle(tab,text,callback)
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1,-10,0,40)
-    frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    frame.Parent = tab
-
-    local label = Instance.new("TextLabel")
-    label.Text = text
-    label.Size = UDim2.new(0.7,0,1,0)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.new(1,1,1)
-    label.Parent = frame
-
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0.3,0,1,0)
-    button.Position = UDim2.new(0.7,0,0,0)
-    button.Text = "OFF"
-    button.BackgroundColor3 = Color3.fromRGB(60,60,60)
-    button.TextColor3 = Color3.new(1,1,1)
-    button.Parent = frame
-
-    local state = false
-
-    ripple(button)
-
-    button.MouseButton1Click:Connect(function()
-
-        state = not state
-
-        if state then
-            button.Text = "ON"
-            tween(button,{BackgroundColor3=Color3.fromRGB(0,170,0)},0.2)
-        else
-            button.Text = "OFF"
-            tween(button,{BackgroundColor3=Color3.fromRGB(60,60,60)},0.2)
-        end
-
-        if callback then
             callback(state)
-        end
-
-    end)
-
-end
-
-------------------------------------------------
--- SLIDER
-------------------------------------------------
-
-function UI:CreateSlider(tab,text,min,max,callback)
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1,-10,0,50)
-    frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    frame.Parent = tab
-
-    local label = Instance.new("TextLabel")
-    label.Text = text.." : "..min
-    label.Size = UDim2.new(1,0,0,20)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.new(1,1,1)
-    label.Parent = frame
-
-    local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(1,-20,0,6)
-    bar.Position = UDim2.new(0,10,0,30)
-    bar.BackgroundColor3 = Color3.fromRGB(60,60,60)
-    bar.Parent = frame
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new(0,0,1,0)
-    fill.BackgroundColor3 = Color3.fromRGB(0,170,255)
-    fill.Parent = bar
-
-    bar.InputBegan:Connect(function(input)
-
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-
-            local pos = (input.Position.X - bar.AbsolutePosition.X)/bar.AbsoluteSize.X
-            pos = math.clamp(pos,0,1)
-
-            fill.Size = UDim2.new(pos,0,1,0)
-
-            local value = math.floor(min + (max-min)*pos)
-
-            label.Text = text.." : "..value
-
-            if callback then
-                callback(value)
-            end
-
-        end
-
-    end)
-
-end
-
-------------------------------------------------
--- DROPDOWN
-------------------------------------------------
-
-function UI:CreateDropdown(tab,text,list,callback)
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1,-10,0,40)
-    frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    frame.Parent = tab
-
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1,0,1,0)
-    button.Text = text
-    button.BackgroundTransparency = 1
-    button.TextColor3 = Color3.new(1,1,1)
-    button.Parent = frame
-
-    local drop = Instance.new("Frame")
-    drop.Size = UDim2.new(1,0,0,0)
-    drop.Position = UDim2.new(0,0,1,0)
-    drop.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    drop.ClipsDescendants = true
-    drop.Parent = frame
-
-    local layout = Instance.new("UIListLayout",drop)
-
-    local opened = false
-
-    ripple(button)
-
-    button.MouseButton1Click:Connect(function()
-
-        opened = not opened
-
-        if opened then
-            tween(drop,{Size=UDim2.new(1,0,0,#list*30)},0.25)
-        else
-            tween(drop,{Size=UDim2.new(1,0,0,0)},0.25)
-        end
-
-    end)
-
-    for _,v in pairs(list) do
-
-        local opt = Instance.new("TextButton")
-        opt.Size = UDim2.new(1,0,0,30)
-        opt.Text = v
-        opt.BackgroundTransparency = 1
-        opt.TextColor3 = Color3.new(1,1,1)
-        opt.Parent = drop
-
-        opt.MouseButton1Click:Connect(function()
-
-            button.Text = text.." : "..v
-            opened = false
-            tween(drop,{Size=UDim2.new(1,0,0,0)},0.25)
-
-            if callback then
-                callback(v)
-            end
 
         end)
 
     end
 
-end
+    return TabFunctions
 
-------------------------------------------------
+end
 
 return UI
