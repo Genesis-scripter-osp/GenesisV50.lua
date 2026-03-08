@@ -1,41 +1,80 @@
--- [[ GENESIS V50 - SUPREME LOADER BY DUY THU ]]
-_G.Genesis = {
-    Modules = {},
-    -- ĐƯỜNG DẪN ĐẾN KHO CODE CỦA DUY
-    BaseUrl = "https://raw.githubusercontent.com/Genesis-scripter-osp/GenesisV50.lua/main/",
-    -- THỨ TỰ CHẠY FILE (ĐÃ THÊM AUTO FARM)
-    BootPriority = {
-        "network/manager.lua",
-        "systems/combat.lua",
-        "systems/auto_farm.lua", 
-        "ui/window.lua",
-        "core/engine.lua"
-    }
-}
+-- Genesis Hub V5 Loader
 
--- Hàm đăng ký module
-function _G.Genesis:Register(name, module) 
-    self.Modules[name] = module 
-end
+local Genesis = {}
 
--- Hàm lấy module đã nạp
-function _G.Genesis:Get(name) 
-    return self.Modules[name] 
-end
+local BASE =
+"https://raw.githubusercontent.com/Genesis-scripter-osp/GenesisV50/main/"
 
-print("🔄 Genesis V50: Đang khởi tạo hệ thống...")
+function Genesis:Load(path)
 
--- Vòng lặp nạp code từ GitHub
-for _, path in ipairs(_G.Genesis.BootPriority) do
-    local success, result = pcall(function()
-        -- Thêm os.time() để tránh bị lưu cache code cũ
-        local url = _G.Genesis.BaseUrl .. path .. "?t=" .. os.time()
-        return loadstring(game:HttpGet(url))()
+    local ok, module = pcall(function()
+        return loadstring(game:HttpGet(BASE .. path))()
     end)
-    
-    if not success then
-        warn("⚠️ Không thể nạp file: " .. path .. " | Lỗi: " .. tostring(result))
+
+    if ok then
+        print("[Genesis] Loaded:",path)
+        return module
+    else
+        warn("[Genesis] Failed:",path)
+        warn(module)
     end
+
 end
 
-print("👑 GENESIS V50 ĐÃ NẠP THÀNH CÔNG!")
+-- load core
+local Scheduler =
+Genesis:Load("core/scheduler.lua")
+
+-- load ui
+local UI =
+Genesis:Load("ui/window.lua")
+
+-- load systems
+local AutoFarm =
+Genesis:Load("systems/autofarm.lua")
+
+local FastAttack =
+Genesis:Load("systems/fastattack.lua")
+
+-- load visual
+local ESP =
+Genesis:Load("visual/esp.lua")
+
+-- load network
+local ServerHop =
+Genesis:Load("network/serverhop.lua")
+
+-- create window
+local window = UI:CreateWindow("Genesis Hub V5")
+
+window:AddToggle("Auto Farm",function(state)
+
+    if state then
+        Scheduler:Add("farm",1,function()
+            AutoFarm:Run()
+        end)
+    else
+        Scheduler:Remove("farm")
+    end
+
+end)
+
+window:AddToggle("Fast Attack",function(state)
+
+    if state then
+        task.spawn(function()
+            FastAttack:Start()
+        end)
+    end
+
+end)
+
+window:AddButton("Enemy ESP",function()
+    ESP:EnableEnemies()
+end)
+
+window:AddButton("Server Hop Low Player",function()
+    ServerHop:LowPlayer()
+end)
+
+return Genesis
